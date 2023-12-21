@@ -1,0 +1,64 @@
+#include<iostream>
+#include<cmath>
+const int INF=1<<30;
+using namespace std;
+int s[9][9]={0};
+int sum[9][9]={0};
+int dp[15][9][9][9][9]={0};//dp[n][x1][y1][x2][y2]表示从左上角(x1,y1)到右下角(x2,y2)组成的矩形切割成n块的最小平方和
+int calsum(int x1,int y1,int x2,int y2)
+{
+	int a=sum[x2][y2]-sum[x2][y1-1]-sum[x1-1][y2]+sum[x1-1][y1-1];
+	return a*a;
+} 
+int main()
+{
+	int n;
+	cin>>n;
+	for(int i=1;i<9;i++)
+	{
+		for(int j=1,rowsum=0;j<9;j++)
+		{
+			cin>>s[i][j];
+			rowsum+=s[i][j];//各行之和 
+			sum[i][j]=sum[i-1][j]+rowsum;//总和 
+		}
+	}
+	for(int x1=1;x1<=8;x1++)//初始状态，不分割的情况 
+	{
+		for(int y1=1;y1<=8;y1++)
+		{
+			for(int x2=x1;x2<=8;x2++)
+			{
+				for(int y2=y1;y2<=8;y2++)
+				{
+					dp[0][x1][y1][x2][y2]=calsum(x1,y1,x2,y2);//检查了很久，把x和y的方向写反了！！！ 注意细节！！！ 
+				}
+			}
+		}
+	}
+	for(int i=1;i<n;i++)//i为分割的次数，比划分的份数少1 
+	{
+		for(int x1=1;x1<=8;x1++)
+		{
+			for(int y1=1;y1<=8;y1++)
+			{
+				for(int x2=x1;x2<=8;x2++)
+				{
+					for(int y2=y1;y2<=8;y2++)
+					{
+						dp[i][x1][y1][x2][y2]=INF;
+						for(int a=x1;a<=x2-1;a++)
+						{
+							 dp[i][x1][y1][x2][y2]=min(dp[i][x1][y1][x2][y2],min(dp[i-1][a+1][y1][x2][y2]+dp[0][x1][y1][a][y2],dp[i-1][x1][y1][a][y2]+dp[0][a+1][y1][x2][y2]));
+						}
+						for(int b=y1;b<=y2-1;b++)
+						{
+						 	dp[i][x1][y1][x2][y2]=min(dp[i][x1][y1][x2][y2],min(dp[i-1][x1][y1][x2][b]+dp[0][x1][b+1][x2][y2],dp[i-1][x1][b+1][x2][y2]+dp[0][x1][y1][x2][b]));
+						}
+					}
+				}
+			}
+		}
+	}
+  printf("%.3f\n", sqrt(double(dp[n-1][1][1][8][8])/n-double(sum[8][8]*sum[8][8])/n/n));  
+}

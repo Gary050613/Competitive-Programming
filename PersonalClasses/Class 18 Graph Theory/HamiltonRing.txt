@@ -1,0 +1,68 @@
+#include<iostream>
+#include<cstring> 
+using namespace std;
+int start,length,x,n;
+bool visited[101],v1[101];
+int ans[101],num[101];
+int g[101][101];
+void print(){
+	int i;
+	for(i = 1; i <= length -1; i++){
+		cout << ans[i] << " ";
+	}
+	cout << ans[length] << endl;
+}
+//数组模拟邻接表
+//last：上次访问的点
+//i   ：当前访问点 
+void dfs(int last,int i){
+	//标记为已经访问过 
+	visited[i] = true;
+	//标记为是否在上一张图中出现过 
+	v1[i] = true;
+	//记录当前答案 
+	ans[++length] = i;
+	for(int j = 1; j <= num[i];j++){
+		// 回到起点，构成哈密尔顿环 
+		if(g[i][j] == x && g[i][j] != last){
+			ans[++length] = g[i][j];
+			//找到的环输出 
+			print();
+			length--;
+			break;
+		} 
+		if(!visited[g[i][j]]){
+			//遍历与 i 相关的所有的问访问的点 
+			dfs(i,g[i][j]);
+		}
+	}
+	length--;
+	//回溯 ，v1不需要恢复 
+	visited[i] = false;
+}
+int main(){
+
+	memset(visited,false,sizeof(visited));
+	memset(v1,false,sizeof(v1));
+	cin >> n;
+	int m;
+	cin >> m;
+	for(int i = 1; i <= m; i++){
+		int x,y;
+		cin >> x >> y;
+		g[x][++num[x]] = y;
+		g[y][++num[y]] = x;
+	} 
+	// 每一个点都作为起点开始尝试访问 
+	// 因为不是任意 一个点都能找遍整个图 
+	for(x =1; x<=n;x++){
+		//如果点 x 不在之前曾经呗访问过的图里 
+		if(!v1[x]){
+			// 记录答案的长度 
+			length = 0;
+			dfs(0,x);
+		}
+	}
+
+	return 0;
+}

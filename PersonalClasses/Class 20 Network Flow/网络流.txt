@@ -1,0 +1,261 @@
+//=========================================
+//
+// EK
+//
+//=========================================
+
+
+//capacity：容量
+//flow：流量
+//parent：记录在一条增广路中每个节点的前一个节点
+//alpha：记录在增广路中当每个节点所能调整的流量的最大值
+
+int EK(int m)
+{
+	//初始化操作
+	int result = 0;
+	for (int i = 1; i <= m; i++)	parent[i] = alpha[i] = 0;
+	queue<int> vertexQueue;
+	while (true)
+	{
+		memset(alpha, 0, sizeof(alpha));
+		alpha[1] = INF;
+		vertexQueue.push(1);
+		//BFS过程
+		while (!vertexQueue.empty())
+		{
+			int vtop = vertexQueue.front();
+			vertexQueue.pop();
+			for (int i = 1 ;  i <= m ; i ++ )
+			{
+				//如果目标节点还未在增广路中出现并且可以调整流量
+				if (!alpha[i] && flow[vtop][i] < capacity[vtop][i])
+				{
+					parent[i] = vtop;
+					alpha[i] = min(capacity[vtop][i] - flow[vtop][i], alpha[vtop]);
+					vertexQueue.push(i);
+				}
+			}
+		}
+		//汇点可调整流量为0，说明没有增广路了，算法结束
+		if (alpha[m] == 0)
+		{
+			return result;
+		}
+		//汇点可调整流量不为0，那么找到了增广路，增广路上所有节点做流量调整
+		for (int i = m; i != 1; i = parent[i])
+		{
+			flow[parent[i]][i] += alpha[m];//前向弧流量增加
+			flow[i][parent[i]] -= alpha[m];//后向弧流量减少
+		}
+		//由于一开始流量都为0，调整多少能量就代表整个可行流的流量增加了多少
+		result += alpha[m];
+	}
+}
+
+
+//=========================================
+//
+// DINIC
+//
+//=========================================
+
+//构建层次网络
+void bfs()
+{
+	memset(visit, false, sizeof(visit));
+	memset(dist, 0, sizeof(dist));
+	queue<int> vertQue;
+	vertQue.push(1);
+	dist[1] = 0;
+	visit[1] = true;
+	while (!vertQue.empty())
+	{
+		int vTop = vertQue.front();
+		vertQue.pop();
+		for (int i = head[vTop] ; i != -1 ; i = Edges[i].next)
+		{
+			//目标节点还未被确立层次，并且可以到达目标节点，就进行层次更新
+			if (Edges[i].capacity && !visit[Edges[i].to])
+			{
+				dist[Edges[i].to] = dist[vTop] + 1;
+				visit[Edges[i].to] = true;
+				vertQue.push(Edges[i].to);
+			}
+		}
+	}
+}
+//dfs查找所有增广路并做流量调整
+int dfs(int end , int u , int delta)
+{
+	if (u == end) return delta;
+	int res = 0;
+	for (int i = head[u] ; i != -1  ; i = Edges[i].next)
+	{
+		if (dist[Edges[i].to] == dist[u] + 1)
+		{
+			int dd = dfs(end, Edges[i].to, min(Edges[i].capacity, delta));
+			Edges[i].capacity -= dd;	//前向弧流量增加(capacity为可调整流量)
+			Edges[i ^ 1].capacity += dd; //反向弧流量减少
+			delta -= dd;
+			res += dd;
+		}
+	}
+	return res;
+}
+
+int dinic(int end)
+{
+	int ret = 0;
+	while (true)
+	{
+		bfs();
+		if (!visit[end])
+		{
+			return ret;
+		}
+		ret += dfs(end, 1, 1e8);
+	}
+	return ret;
+}
+
+
+//=========================================
+//
+// ISAP
+//
+//=========================================
+
+int gap[maxN]; //层次网络中某一层包含节点的个数
+int map[maxN][maxN];//邻接矩阵
+int level[maxN]; //层次
+int pre[maxN]; //增广路中节点的前一个节点
+
+//m为节点总个数
+int sap(int m)
+{
+	//一开始所有节点的层次设为0
+	int result = 0;
+	gap[0] = m;
+	pre[1] = 1;
+	int u = 1 , v;
+	while (level[1] < m)
+	{
+		//找可行弧
+		for (v = 1; v <= m; v++)
+		{
+			if (map[u][v] && level[u] == level[v] + 1) break;
+		}
+		//找到了可行弧
+		if (v <= m)
+		{
+			pre[v] = u;
+			u = v;
+			//找到了一条增广路，做流量调整
+			if (v == m)
+			{
+				int min = 1e8;
+				for (int i = v; i != 1; i = pre[i])
+					if (min > map[pre[i]][i])
+						min = map[pre[i]][i];
+				result += min;
+				for (int i = v; i != 1; i = pre[i])
+				{
+					map[pre[i]][i] -= min;
+					map[i][pre[i]] += min;
+				}
+				u = 1;
+			}
+		}
+		else {
+			//未找到可行弧，调节层次网络，将当前节点的层次设为周围所有节点层次最小值+1，
+			//以确保下一次能找到可行弧
+			int minlevel = 1e5;
+			for (int i = 1; i <= m; i++)
+				if (map[u][i] && minlevel > level[i])
+					minlevel = level[i];
+			//gap优化 如果当前这个节点的层次中只包含这个节点，在这个节点的层次做调整后，
+			//当前网络就不再包含具有这个层次的节点了，这个时候是一定没办法找到可行流的，
+			//因此算法可以终止了。
+			gap[level[u]]--;
+			if (gap[level[u]] == 0) break;
+			level[u] = minlevel + 1;
+			gap[minlevel + 1]++;
+			u = pre[u];
+		}
+	}
+	return result;
+}
+
+//=========================================
+//
+// HLPP
+//
+//=========================================
+struct Vert
+{
+	int ef;//盈余
+	int x;//节点编号
+	int dist;//节点层次
+	Vert() {};
+	inline bool operator < (const Vert & v)const
+	{
+		return this->dist < v.dist;
+	}
+}Verts[maxN];
+
+//出现断层时，将所有高于该层的节点的层次都设为 源点层次+1，好让它们流回到源点
+//因为由于断层这些节点再也没办法将流量流到汇点了
+void Ga(int m , int d)
+{
+	for (int i = 1; i <= m; i++)
+		if (i != 1 && i != m && Verts[i].dist > d && Verts[i].dist <= m) Verts[i].dist = m + 1;
+}
+
+//推进流量 如果推进了0流量 就返回false 表示实际上并不可以推进流量
+bool pushFlow(int from ,int to , int edge)
+{
+	int w = min(Verts[from].ef, Edges[edge].capacity);
+	Edges[edge].capacity -= w;
+	Edges[edge ^ 1].capacity += w;
+	Verts[from].ef -= w;
+	Verts[to].ef += w;
+	return w;
+}
+
+int preMaxFlow(int t)
+{
+	memset(Verts, 0, sizeof(Verts));
+	for (int i = 1; i <= t; i++)Verts[i].x = i;
+	priority_queue<Vert> vertQue;
+	Verts[1].dist = t;
+	Verts[1].x = 1;
+	Verts[1].ef = 1e8;
+	vertQue.push(Verts[1]);
+	Gap[Verts[1].dist] = 1;
+	Gap[0] = t - 1;
+	while (!vertQue.empty())
+	{
+		Vert topV = vertQue.top();
+		vertQue.pop();
+		if (!Verts[topV.x].ef) continue;
+		for (int i = head[topV.x] ; i != -1 ; i = Edges[i].next)
+		{
+			int v = Edges[i].to;
+			//源点直接推流量出去  其余情况只在相邻层推流量
+			if ( (topV.x == 1 || (Verts[topV.x].dist == Verts[v].dist+1) )  &&
+			pushFlow(topV.x,v,i) &&  v != 1  && v!=t)
+			{
+				vertQue.push(Verts[v]);
+			}
+		}
+		//仍有流量但没推出去，就将当前节点的层次抬高，以让其尽可能流出
+		if (Verts[topV.x].ef && topV.x != 1 && topV.x != t)
+		{
+			if (!--Gap[Verts[topV.x].dist]) Ga(t, Verts[topV.x].dist);
+			++Gap[++Verts[topV.x].dist];
+			vertQue.push(Verts[topV.x]);
+		}
+	}
+	return Verts[t].ef;
+}

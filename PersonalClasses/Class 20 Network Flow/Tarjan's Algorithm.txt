@@ -1,0 +1,86 @@
+#include<iostream>
+using namespace std;
+//n 个点，m 条边 
+int n,m;
+//cnt:强连通分量
+//k ： 表示每个节点所属的强连通分量
+int cnt,k[1001],num; 
+int DNF[1001],low[1001];
+//inS :是否在栈当中 
+bool inS[1001]; 
+vector<int> G[1001];
+stack<int> S;
+//储存边 
+int from[2001],to[2001]; 
+void init(){
+	memset(inS,0,sizeof(inS));
+	memset(k,0,sizeof(k));
+	memset(DFN,0,sizeof(DFN));
+	memset(low,0,sizeof(low));
+	memset(from,0,sizeof(from));
+	memset(to,0,sizeof(to));
+	cnt = 0;
+	num = 0;
+	while(!S.empty()){
+		S.pop();
+	}
+} 
+void Tarjan(int x){
+	num++;
+	//num:在栈当中的编号 
+	DFN[X] = low[X] = num;
+	inS[x] = 1;
+	S.push(x);
+	//搜索相关节点 
+	for(int i = 0 ; i < G[x].size();++i){
+		int s= G[x][i];
+		//没搜索过
+		if(!DFN[s]){
+			Tarjan(s);
+			//更新能够到达上层节点 
+			low[x] = min(low[x],low[s]); 
+		} 
+		//是否在栈当中 
+		else if(inS[s]){
+			//DFN 是栈当中的编号或者时间戳
+			//如果 s 在栈当中，
+			//x 到栈中最上端的节点为 DFN[s] 
+			low[x] = min(low[x],DFN[s])
+		}
+	} 
+	if(low[x] == DFN[x]){
+		cnt++;
+		int y;
+		do{
+			y = S.top();
+			inS[y] = 0;
+			S.pop();
+			k[y] = cnt;
+		}while(y != x);
+	}
+	return;
+}
+int main(){
+
+	while(scanf("%d %d",&n,&m) != EOF){
+		init();
+		for(int i = 1; i <= n; i++){
+			int a,b;
+			scanf("%d%d",&a,&b);
+			G[a].push_back(b);
+			from[i] = a;
+			to[i] = b;
+		}
+		for(int i = 1; i <= n; i++){
+			num = 0;
+			if(!DFN[i]){
+				Tarjan(i); 
+		}
+		printf("%d\n",cnt);
+		for(int i = 1; i <= n; i++){
+			G[i].clear();
+		}
+	}
+	
+	return 0;
+}

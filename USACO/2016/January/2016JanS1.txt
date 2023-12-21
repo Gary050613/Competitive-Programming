@@ -1,0 +1,40 @@
+/*
+ID: gary0501
+TASK: TASK_NAME_HERE
+LANG: C++
+*/
+#include <bits/stdc++.h>
+using namespace std;
+void setIO(string s) { // the argument is the filename without the extension
+    freopen((s+".in").c_str(),"r",stdin);
+    freopen((s+".out").c_str(),"w",stdout);
+}
+typedef long long ll;
+const int MM = 5e4+5;
+// int l = 0, r = 5e8;
+ll N, K, x[MM];
+ll f(int R){
+    int idx = 0, ans=0;
+    while(idx < N){
+        ll end = x[idx] + 2*R + 1;
+        while(idx<N && x[idx]<end) idx++;
+        ans++;
+    }
+    return ans;
+}
+int R(int l, int r){
+    if(l == r) return l;
+    int mid = (l+r)/2;
+    if(K<f(mid)) return R(mid+1, r);
+    else return R(l, mid);
+}
+int main(){
+    setIO("angry");
+    cin >> N >> K;
+    for(int i = 0;i<N;i++){
+        cin >> x[i];
+    }
+    sort(x, x+N);
+    cout << R(0, 1e9) << endl;
+    return 0;
+}
