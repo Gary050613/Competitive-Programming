@@ -1,2 +1,2 @@
 # Competitive-Programming
-All my solutions for everything, good luck reading them
+All my solutions for everything, have fun reading them
