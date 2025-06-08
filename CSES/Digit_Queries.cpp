@@ -5,13 +5,15 @@ typedef long long ll;
 
 ll arr[25];
 
-ll q, ind, pos, num;
+int ind, pos;
+
+ll q, num;
 
 ll k;
 
 int main(){
-    for (int i = 1; i < 18; i++) {
-        arr[i] = pow(10, i-1) * 9;
+    for (int i = 1; i <= 18; i++) {
+        arr[i] = pow(10, i-1) * 9 * i;
     }
     cin >> q;
     while (q--) {
@@ -20,8 +22,15 @@ int main(){
         while (k > arr[ind]) {
             k -= arr[ind++];
         }
+        // cout << "ind: " << ind << endl;
+        // cout << "k: " << k << endl;
         if (ind == 1) num = k;
-        else num = pow(10, ind-1) - 1 + (k + 1) / ind;
+        else {
+            num = pow(10, ind-1);
+            num--;
+            num += (k + ind - 1) / ind;
+        }
+        // cout << num << endl;
         pos = ind - 1 - (k - 1) % ind;
         while(pos--) {
             num /= 10;

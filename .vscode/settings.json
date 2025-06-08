@@ -4,6 +4,7 @@
         "ostream": "cpp",
         "__locale": "cpp",
         "ios": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "cmath": "cpp"
     }
 }
