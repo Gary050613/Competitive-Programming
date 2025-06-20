@@ -1,3 +1,5 @@
 .cph/
 .vscode/
-.DS_Store
+*.DS_Store
+*.bin
+*.exe
